@@ -1,0 +1,67 @@
+# The plugin on the systems its users have.
+#   core     the calculation layer alone, on Windows and Linux, from Python 3.9 (QGIS for Windows before 2024)
+#   linux    the whole plugin inside the official QGIS container images, QGIS 3.34 to 4.2 (Qt5 and Qt6)
+#   windows  the whole plugin inside QGIS installed from the official Windows installers
+# The whole-plugin test is tests/headless_qgis.py; it exits 0 only if every check holds.
+name: tests
+
+on:
+  workflow_dispatch:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  core:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        python: ["3.12", "3.13"]
+        include:
+          - { os: windows-latest, python: "3.9" }
+          - { os: ubuntu-22.04, python: "3.9" }
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "${{ matrix.python }}" }
+      - run: python -m pip install numpy pytest
+      - run: python -m pytest tests/test_core.py -q
+
+  linux:
+    strategy:
+      fail-fast: false
+      matrix:
+        qgis: ["3.34", "3.40", "3.44", "4.2"]
+    runs-on: ubuntu-latest
+    container: qgis/qgis:${{ matrix.qgis }}
+    steps:
+      - uses: actions/checkout@v4
+      - run: QT_QPA_PLATFORM=offscreen python3 tests/headless_qgis.py
+
+  windows:
+    strategy:
+      fail-fast: false
+      matrix:
+        installer: ["QGIS-OSGeo4W-3.34.0-2.msi", "QGIS-OSGeo4W-3.40.15-1.msi", "QGIS-OSGeo4W-3.44.15-2.msi", "QGIS-OSGeo4W-4.2.3-2.msi"]
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install QGIS from the official installer
+        shell: pwsh
+        run: |
+          curl.exe -sSL -A "qgis-plugin-test" -o qgis.msi "https://download.osgeo.org/qgis/windows/${{ matrix.installer }}"
+          if ((Get-Item qgis.msi).Length -lt 100MB) { throw "the installer did not download" }
+          $p = Start-Process msiexec.exe -ArgumentList "/i", "qgis.msi", "/qn", "/norestart" -Wait -PassThru
+          if ($p.ExitCode -ne 0) { throw "msiexec ended with $($p.ExitCode)" }
+      - name: The whole plugin inside that QGIS
+        shell: pwsh
+        run: |
+          $bat = Get-ChildItem "C:\Program Files\QGIS*\bin\python-qgis*.bat" | Select-Object -First 1
+          if (-not $bat) { throw "python-qgis was not found in the installed QGIS" }
+          Write-Host "using $($bat.FullName)"
+          & $bat.FullName tests\headless_qgis.py
+          if ($LASTEXITCODE -ne 0) { throw "the plugin test failed" }
