@@ -53,7 +53,7 @@ jobs:
       - name: Install QGIS from the official installer
         shell: pwsh
         run: |
-          curl.exe -sSL -A "qgis-plugin-test" -o qgis.msi "https://download.osgeo.org/qgis/windows/${{ matrix.installer }}"
+          curl.exe -sSL --retry 5 --retry-all-errors --retry-delay 10 -C - -A "qgis-plugin-test" -o qgis.msi "https://download.osgeo.org/qgis/windows/${{ matrix.installer }}"
           if ((Get-Item qgis.msi).Length -lt 100MB) { throw "the installer did not download" }
           $p = Start-Process msiexec.exe -ArgumentList "/i", "qgis.msi", "/qn", "/norestart" -Wait -PassThru
           if ($p.ExitCode -ne 0) { throw "msiexec ended with $($p.ExitCode)" }
