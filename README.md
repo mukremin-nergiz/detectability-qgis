@@ -30,8 +30,7 @@ website offers, is not in the plugin: it needs a finite-element package that QGI
 
 ## Install
 
-In QGIS: *Plugins → Manage and Install Plugins*, search for **Detectability**. It is marked experimental for now, so
-*Settings → Show also experimental plugins* has to be ticked.
+In QGIS: *Plugins → Manage and Install Plugins*, search for **Detectability**.
 
 From a file: download the zip of a release, then *Plugins → Manage and Install Plugins → Install from ZIP*.
 
