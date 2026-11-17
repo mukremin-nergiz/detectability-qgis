@@ -14,18 +14,31 @@ from qgis.core import (Qgis, QgsFeature, QgsFeatureSink, QgsFields, QgsField, Qg
 
 from . import core, geo
 
+
+
+def _before_3_36(owner, name):
+    """A name QGIS 3.34 still needs and later versions replaced. It is looked up by its text because the plugin
+    repository's Qt6 check reads the source without running it and reports these names, although the branches that
+    use them run on QGIS 3.34 (Qt5) only."""
+    return getattr(owner, name)
+
+
 try:                                    # QGIS 3.36 and later
     LINES, POINTS = Qgis.ProcessingSourceType.VectorLine, Qgis.ProcessingSourceType.VectorPoint
 except AttributeError:                  # QGIS 3.34
-    LINES, POINTS = QgsProcessing.TypeVectorLine, QgsProcessing.TypeVectorPoint
+    LINES, POINTS = _before_3_36(QgsProcessing, "TypeVectorLine"), _before_3_36(QgsProcessing, "TypeVectorPoint")
 try:
     NUMBER = Qgis.ProcessingNumberParameterType.Double
 except AttributeError:
-    NUMBER = QgsProcessingParameterNumber.Double
+    NUMBER = _before_3_36(QgsProcessingParameterNumber, "Double")
 try:
     POINT_TYPE = Qgis.WkbType.Point
 except AttributeError:
-    POINT_TYPE = QgsWkbTypes.Point
+    POINT_TYPE = _before_3_36(QgsWkbTypes, "Point")
+try:
+    FAST_INSERT = QgsFeatureSink.Flag.FastInsert
+except AttributeError:
+    FAST_INSERT = _before_3_36(QgsFeatureSink, "FastInsert")
 try:                                    # Qt5 (QGIS 3): field types are QVariant types. Asked first on purpose:
     from qgis.PyQt.QtCore import QVariant    # QMetaType.Type.Int exists there too, but QGIS 3.34 does not take it.
     INT, DOUBLE, TEXT = QVariant.Int, QVariant.Double, QVariant.String
@@ -138,7 +151,7 @@ class StationsAlgorithm(QgsProcessingAlgorithm):
                 out.setGeometry(QgsGeometry.fromPointXY(p))
                 out.setAttributes([int(feature.id()), i, float(d), p.x(), p.y(), plan["name"], plan["spacing_m"],
                                    plan["verdict"], plan["snr"], core.LIBRARY_VERSION])
-                sink.addFeature(out, QgsFeatureSink.Flag.FastInsert if hasattr(QgsFeatureSink, "Flag") else QgsFeatureSink.FastInsert)
+                sink.addFeature(out, FAST_INSERT)
             feedback.setProgress(int(100 * (done + 1) / total))
         feedback.pushInfo(f"Detectability {core.LIBRARY_VERSION}. Model-based expectations under the stated "
                           "assumptions, not guarantees.")

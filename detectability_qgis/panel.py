@@ -142,6 +142,10 @@ class DetectabilityPanel(QDockWidget):
                       "not guarantees. No network connection, no data collected.")
         note.setWordWrap(True)
         outer.addWidget(note)
+        feedback = QLabel(f'Used this on a real survey? <a href="{core.FEEDBACK_URL}">Tell me how it compared</a>.')
+        feedback.setWordWrap(True)
+        feedback.setOpenExternalLinks(True)  # opens the user's browser; the plugin itself makes no connection
+        outer.addWidget(feedback)
 
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)

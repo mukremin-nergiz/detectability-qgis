@@ -10,6 +10,7 @@ from .lib import detectability
 from .lib.detectability import detect, rocks, survey as _survey
 
 LIBRARY_VERSION = detectability.__version__
+FEEDBACK_URL = "https://github.com/mukremin-nergiz/detectability/issues/new/choose"
 
 #: Methods offered. Resistivity needs a finite-element package that QGIS does not ship; it is not offered.
 METHODS = (("gravity", "Gravity"), ("magnetic", "Magnetic"), ("gradient", "Magnetic gradient"), ("gpr", "GPR"))
