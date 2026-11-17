@@ -2,7 +2,6 @@
 name=Detectability
 qgisMinimumVersion=3.34
 qgisMaximumVersion=4.99
-supportsQt6=True
 description=Will the survey see the target? Pre-survey detectability for gravity, magnetics and ground radar.
 about=Describe a buried target and a survey; the plugin models the gravity, magnetic, magnetic-gradient and
     ground-radar response, compares it with instrument and field noise, and says whether the target is detectable,
