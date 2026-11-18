@@ -102,3 +102,22 @@ def test_the_layout_follows_the_recommended_method_and_says_when_nothing_is_dete
     assert only_magnetic["recommended"] is None and plan["method"] == "magnetic" and not plan["recommended"]
     assert "not expected to detect" in core.line_notes(500.0, plan)[-1]
     assert core.layout(core.evaluate(CAVITY, {}, ["magnetic"])) is None           # no location: nothing was assessed
+
+
+def test_a_line_spacing_gives_the_worst_case_between_two_lines_and_zero_changes_nothing():
+    body = {**CAVITY, "depth_top": 10.0}                       # centre 20 m down
+    plain = core.evaluate(body, {}, ["gravity"])
+    assert core.with_line_spacing({"date": "2027-03-01"}, 0.0) == {"date": "2027-03-01"}
+    assert core.evaluate(body, core.with_line_spacing({}, 0.0), ["gravity"])["results"] == plain["results"]
+    assert core.rows(plain)[0]["lines"] is None and core.layout(plain)["line_spacing_m"] is None
+    spaced = core.evaluate(body, core.with_line_spacing({}, 40.0), ["gravity"])
+    a, b = plain["results"][0]["assessment"], spaced["results"][0]["assessment"]
+    assert abs(b["peak"] / a["peak"] - 2 ** -1.5) < 1e-6        # a sphere 20 m down, seen from a line 20 m aside
+    row = core.rows(spaced)[0]
+    assert row["lines"].startswith("Worst case between lines 40 m apart: 35 % of the best line (178 µGal)")
+    assert any("worst case for an ideal survey" in line for line in row["assumptions"])
+    plan = core.layout(spaced)
+    assert plan["line_spacing_m"] == 40.0
+    assert "worst case between lines 40 m apart, not those of this one line" in core.line_notes(400.0, plan, 12.0)[1]
+    tunnel = {"shape": "horizontal_cylinder", "depth_top": 4.0, "size": 3.0, "material": "air", "host": "limestone"}
+    assert core.rows(core.evaluate(tunnel, core.with_line_spacing({}, 40.0), ["gravity"]))[0]["lines"] is None

@@ -83,6 +83,10 @@ class DetectabilityPanel(QDockWidget):
         self.time_choice.addItem("Custom", None)
         for name, value in core.MAGNETIC_TIME_NT:
             self.time_choice.addItem(f"{name} ({value:g})" if value == 0 else f"{name} {value:g}", value)
+        self.line_spacing = _spin(0.0, 0.0, 5000.0, 1, "m")
+        self.line_spacing.setSpecialValueText("a line over the target")      # shown for 0: no spacing given
+        self.line_spacing.setToolTip("Distance between parallel survey lines. Given, a compact target is assessed "
+                                     "where the survey reads least between two lines.")
         self.latitude = _spin(0.0, -90.0, 90.0, 5, "°")
         self.longitude = _spin(0.0, -180.0, 180.0, 5, "°")
         self.date = QDateEdit(QDate.currentDate())
@@ -95,6 +99,7 @@ class DetectabilityPanel(QDockWidget):
         form.addRow("Magnetic site noise", self.magnetic_site)
         form.addRow("Magnetic time variation", self.magnetic_time)
         form.addRow("Time variation", self.time_choice)
+        form.addRow("Line spacing", self.line_spacing)
         form.addRow("Latitude", self.latitude)
         form.addRow("Longitude", self.longitude)
         form.addRow("", from_map)
@@ -352,6 +357,7 @@ class DetectabilityPanel(QDockWidget):
                   "date": self.date.date().toString("yyyy-MM-dd")}
         if self.line is not None:
             survey["profile_azimuth"] = round(self.line.azimuth, 1)
+        survey = core.with_line_spacing(survey, self.line_spacing.value())
         methods = [key for key, box in self.methods.items() if box.isChecked()]
         return target, survey, methods
 
@@ -384,6 +390,8 @@ class DetectabilityPanel(QDockWidget):
                 f"<p><b>{e(r['method'])}</b>: <span style='color:{colour}'><b>{e(r['verdict'])}</b></span><br>"
                 f"Signal / noise {e(r['snr'])} &nbsp;·&nbsp; peak {e(r['peak'])} &nbsp;·&nbsp; noise {e(r['noise'])}<br>"
                 f"Station spacing ≤ {e(r['spacing'])} &nbsp;·&nbsp; profile length ≥ {e(r['profile'])}</p>")
+            if r.get("lines"):
+                parts.append(f"<p>{e(r['lines'])}</p>")
             if r.get("parts"):
                 p = r["parts"]
                 parts.append(f"<p>Field noise is site {p['site']:g} nT and time variation {p['time']:g} nT, added in "

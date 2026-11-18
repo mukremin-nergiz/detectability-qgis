@@ -70,7 +70,8 @@ class StationsAlgorithm(QgsProcessingAlgorithm):
         return ("For each line of the input layer, models the response of a buried target under the middle of the "
                 "line with the chosen method, compares it with instrument and field noise, and writes one point a "
                 "station at the spacing the model recommends. Each point carries the verdict and the "
-                "signal-to-noise ratio. Results are model-based expectations under the stated assumptions, not "
+                "signal-to-noise ratio. With a line spacing, a compact target is assessed where the survey reads "
+                "least between two lines instead of under the line. Results are model-based expectations under the stated assumptions, not "
                 f"guarantees. Detectability {core.LIBRARY_VERSION}; no network connection.")
 
     def createInstance(self):  # noqa: N802
@@ -94,6 +95,8 @@ class StationsAlgorithm(QgsProcessingAlgorithm):
         add(QgsProcessingParameterNumber("MAGNETIC_TIME_NOISE", "Magnetic time variation (nT), added in quadrature",
                                          NUMBER, 0.0, minValue=0.0, maxValue=1000.0))
         add(QgsProcessingParameterString("DATE", "Survey date (YYYY-MM-DD); empty for today", optional=True))
+        add(QgsProcessingParameterNumber("LINE_SPACING", "Line spacing (m): worst case between two lines; 0 for a "
+                                         "line over the target", NUMBER, 0.0, minValue=0.0, maxValue=5000.0))
         add(QgsProcessingParameterFeatureSink(self.OUTPUT, "Stations", POINTS))
 
     def processAlgorithm(self, parameters, context, feedback):  # noqa: N802
@@ -133,6 +136,7 @@ class StationsAlgorithm(QgsProcessingAlgorithm):
                 survey = {"gravity_field_noise": number("GRAVITY_NOISE"), "magnetic_field_noise": number("MAGNETIC_SITE_NOISE"),
                           "latitude": line.midpoint.y(), "longitude": line.midpoint.x(), "date": date,
                           "profile_azimuth": round(line.azimuth, 1)}
+                survey = core.with_line_spacing(survey, number("LINE_SPACING"))
                 report = core.evaluate(target, survey, [method], number("MAGNETIC_TIME_NOISE"))
             except (ValueError, TypeError) as error:
                 raise QgsProcessingException(f"Line {feature.id()}: {error}")
@@ -145,6 +149,8 @@ class StationsAlgorithm(QgsProcessingAlgorithm):
                               f"{plan['snr']:.3g}; {len(distances)} stations every {plan['spacing_m']:g} m.")
             for note in core.line_notes(line.length_m, plan):
                 feedback.pushInfo("  " + note)
+            if core.rows(report)[0].get("lines"):
+                feedback.pushInfo("  " + core.rows(report)[0]["lines"] + " An ideal survey: a real one can lose more.")
             for i, d in enumerate(distances, 1):
                 p = line.point_at(d)
                 out = QgsFeature(fields)

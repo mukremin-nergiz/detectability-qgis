@@ -27,6 +27,16 @@ DEFAULT_GRAVITY_FIELD_UGAL = detect.DEFAULT_FIELD_NOISE_UGAL
 DEFAULT_MAGNETIC_SITE_NT = detect.DEFAULT_FIELD_NOISE_NT
 
 
+def with_line_spacing(survey: dict, spacing_m) -> dict:
+    """The survey with the spacing of its parallel lines, when one is given. Zero or nothing leaves it as it is: the
+    result is then for a line over the target, as before. With a spacing the library assesses a compact target where
+    the survey reads least between two lines (gravity, magnetic and magnetic gradient)."""
+    survey = dict(survey)
+    if spacing_m:
+        survey["line_spacing"] = float(spacing_m)
+    return survey
+
+
 def evaluate(target: dict, survey: dict, methods, magnetic_time_noise: float = 0.0) -> dict:
     """Run the library and return its report as plain data.
 
@@ -67,8 +77,17 @@ def rows(report: dict) -> list:
                     "snr": _figure(a["snr"]), "peak": f"{_figure(a['peak'])} {a['units']}",
                     "noise": f"{_figure(a['noise'])} {a['units']}", "spacing": f"{_figure(a['station_spacing'])} m",
                     "profile": f"{_figure(a['profile_length'])} m", "assumptions": list(a["assumptions"]),
-                    "parts": r.get("field_noise_parts")})
+                    "parts": r.get("field_noise_parts"), "lines": _between_lines(a)})
     return out
+
+
+def _between_lines(a: dict):
+    """One sentence when the figures are the worst case between two survey lines, else None."""
+    if a.get("line_spacing") is None:
+        return None
+    return (f"Worst case between lines {_figure(a['line_spacing'])} m apart: {100 * a['peak'] / a['peak_best_line']:.0f} % "
+            f"of the best line ({_figure(a['peak_best_line'])} {a['units']}); a line over the target reads "
+            f"{_figure(a['peak_over_target'])} {a['units']}.")
 
 
 def layout(report: dict):
@@ -87,7 +106,8 @@ def layout(report: dict):
     a = chosen["assessment"]
     return {"method": chosen["method"], "name": dict(METHODS).get(chosen["method"], chosen["method"]),
             "verdict": a["verdict"], "snr": float(a["snr"]), "spacing_m": float(a["station_spacing"]),
-            "profile_length_m": float(a["profile_length"]), "recommended": chosen["method"] == report.get("recommended")}
+            "profile_length_m": float(a["profile_length"]), "recommended": chosen["method"] == report.get("recommended"),
+            "line_spacing_m": a.get("line_spacing")}
 
 
 def station_distances(length_m: float, spacing_m: float, limit: int = 20000) -> list:
@@ -115,7 +135,10 @@ def line_notes(length_m: float, plan: dict, offset_m=None) -> list:
     else:
         notes.append(f"The line is {_figure(length_m)} m long (the model asks for at least {_figure(need)} m).")
     if offset_m is not None:
-        if offset_m > max(plan["spacing_m"], 1.0):
+        if plan.get("line_spacing_m") is not None:
+            notes.append(f"The line passes {_figure(offset_m)} m from the target point. The figures above are the worst "
+                         f"case between lines {_figure(plan['line_spacing_m'])} m apart, not those of this one line.")
+        elif offset_m > max(plan["spacing_m"], 1.0):
             notes.append(f"The line passes {_figure(offset_m)} m from the target point. The model's profile runs across "
                          "the middle of the target: a line to one side sees less than the figures above.")
         else:

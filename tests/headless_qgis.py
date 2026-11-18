@@ -106,6 +106,18 @@ try:
     assert abs(span - 400.0) < 0.01 and feats[0]["method"] == "Gravity" and feats[0]["library"] == core.LIBRARY_VERSION
     log["stations"], log["span_m"] = len(feats), round(span, 3)
 
+    # a line spacing: the worst case between two lines, and back to a line over the target
+    assert panel.line_spacing.value() == 0 and panel.line_spacing.text() == "a line over the target"
+    panel.line_spacing.setValue(60.0)
+    panel.run()
+    spaced = panel.out.toPlainText()
+    assert "Worst case between lines 60 m apart" in spaced and "worst case for an ideal survey" in spaced, spaced[:600]
+    assert "114" not in spaced.split("Station spacing")[0]
+    panel.line_spacing.setValue(0.0)
+    panel.run()
+    assert panel.out.toPlainText() == text
+    log["line_spacing"] = "ok"
+
     # the map tools, driven the way a click drives them
     panel.clear_map()
     panel.start_line()

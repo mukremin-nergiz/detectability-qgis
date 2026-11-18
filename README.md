@@ -50,6 +50,13 @@ Distances along a line are measured in metres on a plane laid on the ground at t
 projection the project uses. The profile of the model runs across the middle of the target: a line that passes to one
 side sees less than the figures say, and the panel tells you how far to the side the line is.
 
+Give a **line spacing** (panel, or the Processing algorithm's parameter) and a compact target (sphere, shaft, block) is
+assessed for gravity, magnetics and the magnetic gradient where a survey of parallel lines reads least between two of
+them, taking for every position the line that reads most. The figures, the verdict and the station spacing are then
+those of that line, and the result says what share of the best line it reads. It is the worst case of an ideal survey
+(straight, evenly spaced lines, constant height, flat ground); a real one can lose more, and every such result says
+so with its source. Left at zero, results are those of a line over the target.
+
 ## Where it has been tried
 
 The whole plugin (load, panel, target, line, stations, Processing, unload) is run by `tests/headless_qgis.py` inside
