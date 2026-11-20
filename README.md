@@ -10,6 +10,8 @@ Python.
 
 ![The Detectability panel in QGIS](docs/panel.png)
 
+What changed in each version: [updates](https://detectability.mukreminnergiz.com/detectability-qgis-plugin/updates).
+
 ## What it does
 
 - **Panel.** Target (sphere, tunnel or pipe, shaft or well, room or block, wall or dyke, fault or contact), its depth
