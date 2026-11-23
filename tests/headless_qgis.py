@@ -118,6 +118,17 @@ try:
     assert panel.out.toPlainText() == text
     log["line_spacing"] = "ok"
 
+    # own contrasts: half the table's density contrast halves the gravity peak (114 -> 57); zero takes the tables
+    assert panel.density_contrast.text() == "" and panel.density_contrast.placeholderText() == "from the table"
+    assert panel.susceptibility_contrast.text() == "" and panel.susceptibility_contrast.placeholderText() == "from the table"
+    panel.density_contrast.setText(str(core.rocks.contrast("air", "limestone") / 2))
+    panel.run()
+    assert "peak 57" in panel.out.toPlainText(), panel.out.toPlainText()[:400]
+    panel.density_contrast.setText("")
+    panel.run()
+    assert panel.out.toPlainText() == text
+    log["contrasts"] = "ok"
+
     # remanence: a Koenigsberger ratio reaches the library and is reported; none gives the same result as before
     assert panel.koenigsberger.value() == 0 and panel.koenigsberger.text() == "none" and panel.remanence.text() == "none"
     panel.koenigsberger.setValue(4.1)
@@ -186,6 +197,15 @@ try:
     snr = next(magnetic.getFeatures())["signal_noise"], next(remanent.getFeatures())["signal_noise"]
     assert abs(snr[1] / snr[0] - 3.0) < 1e-6, snr          # along the present field: 1 + Q times the induced
     log["processing_remanence"] = round(snr[1] / snr[0], 6)
+    k = core.rocks.susceptibility_contrast("basalt", "sandstone")
+    doubled = processing.run("detectability:stations", {"INPUT": lines, "SHAPE": 4, "DEPTH_TOP": 2, "SIZE": 5,
+                                                        "DEPTH_BOTTOM": 60, "MATERIAL": core.MATERIALS.index("basalt"),
+                                                        "HOST": core.MATERIALS.index("sandstone"), "METHOD": 1,
+                                                        "MAGNETIC_TIME_NOISE": 3.6, "DATE": "2027-03-01",
+                                                        "SUSCEPTIBILITY_CONTRAST": 2 * k, "OUTPUT": "memory:"})["OUTPUT"]
+    ratio = next(doubled.getFeatures())["signal_noise"] / snr[0]
+    assert abs(ratio - 2.0) < 1e-6, ratio
+    log["processing_contrast"] = round(ratio, 6)
 
     plugin.unload()
     assert window.docks == [] and window.menu == []

@@ -37,6 +37,18 @@ def with_line_spacing(survey: dict, spacing_m) -> dict:
     return survey
 
 
+def with_contrasts(target: dict, density_contrast=0.0, susceptibility_contrast=0.0) -> dict:
+    """The target with its own density contrast (kg/m³, gravity) and susceptibility contrast (SI, magnetic and
+    gradient), target minus host, in place of the material tables. Zero (or nothing) takes the value from the tables,
+    as before: a contrast of exactly zero would leave nothing to detect, so it is read as "not given"."""
+    target = dict(target)
+    if density_contrast:
+        target["density_contrast"] = float(density_contrast)
+    if susceptibility_contrast:
+        target["susceptibility_contrast"] = float(susceptibility_contrast)
+    return target
+
+
 def with_remanence(target: dict, remanence=0.0, inclination=0.0, declination=0.0, koenigsberger_ratio=0.0) -> dict:
     """The target with a remanent magnetisation, added by the library to the induced one (magnetic and gradient).
 

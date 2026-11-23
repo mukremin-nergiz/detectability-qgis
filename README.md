@@ -59,6 +59,10 @@ those of that line, and the result says what share of the best line it reads. It
 (straight, evenly spaced lines, constant height, flat ground); a real one can lose more, and every such result says
 so with its source. Left at zero, results are those of a line over the target.
 
+Give the target's own **density contrast** (kg/m³) or **susceptibility contrast** (SI), target minus host, and it is
+used in place of the material tables; left empty (zero in the Processing algorithm), the tables are used. A
+Koenigsberger ratio applies to the susceptibility used, given or from the tables.
+
 Give a **remanent magnetisation** (panel, or the Processing algorithm's parameters) and the magnetic and gradient
 results add it to the induced magnetisation: either as a Koenigsberger ratio Q, remanent over induced, taken along the
 present field, or as a vector (intensity in A/m, inclination and declination). Give one or the other, not both. No

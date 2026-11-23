@@ -146,3 +146,20 @@ def test_remanence_is_passed_to_the_library_and_zero_changes_nothing():
         assert "not both" in str(error)
     else:
         raise AssertionError("both a vector and a ratio were accepted")
+
+
+def test_own_contrasts_replace_the_material_tables_and_zero_takes_the_tables():
+    plain = core.evaluate(CAVITY, {}, ["gravity"])
+    assert core.with_contrasts(CAVITY) == CAVITY and core.with_contrasts(CAVITY, 0.0, 0.0) == CAVITY
+    assert core.evaluate(core.with_contrasts(CAVITY), {}, ["gravity"])["results"] == plain["results"]
+    table = core.rocks.contrast("air", "limestone")
+    half = core.evaluate(core.with_contrasts(CAVITY, density_contrast=table / 2), {}, ["gravity"])
+    assert abs(half["results"][0]["assessment"]["peak"] / plain["results"][0]["assessment"]["peak"] - 0.5) < 1e-9
+    body = {"shape": "sphere", "depth_top": 15.0, "size": 20.0, "material": "basalt", "host": "limestone"}
+    m = core.evaluate(body, WHERE, ["magnetic"])["results"][0]["assessment"]["peak"]
+    k = core.rocks.susceptibility_contrast("basalt", "limestone")
+    m2 = core.evaluate(core.with_contrasts(body, susceptibility_contrast=2 * k), WHERE, ["magnetic"])
+    assert abs(m2["results"][0]["assessment"]["peak"] / m - 2.0) < 1e-6
+    # the contrast and a Koenigsberger ratio together: the ratio applies to the given susceptibility
+    both = core.with_remanence(core.with_contrasts(body, susceptibility_contrast=2 * k), koenigsberger_ratio=1.0)
+    assert abs(core.evaluate(both, WHERE, ["magnetic"])["results"][0]["assessment"]["peak"] / m - 4.0) < 1e-6

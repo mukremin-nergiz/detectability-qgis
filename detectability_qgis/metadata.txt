@@ -20,7 +20,7 @@ repository=https://github.com/mukremin-nergiz/detectability-qgis
 category=Plugins
 icon=icon.png
 tags=geophysics,gravity,magnetics,GPR,survey planning
-changelog=0.1.6 Remanent magnetisation: the target's remanence can be given, as a Koenigsberger ratio Q (along the present field) or as a vector (intensity, inclination, declination), in the panel and the Processing algorithm; the library adds it to the induced magnetisation and every magnetic result says which was used. Left at none, results are as before (induced magnetisation only).
+changelog=0.1.6 Own contrasts: the target's density contrast (kg/m³) and susceptibility contrast (SI), target minus host, can be given in place of the material tables; left empty, the tables are used as before. Remanent magnetisation: the target's remanence can be given, as a Koenigsberger ratio Q (along the present field) or as a vector (intensity, inclination, declination), in the panel and the Processing algorithm; the library adds it to the induced magnetisation and every magnetic result says which was used. Left at none, results are as before (induced magnetisation only).
     0.1.5 Line spacing: with the distance between parallel survey lines given (panel and Processing algorithm), a compact target is assessed where the survey reads least between two lines instead of under the line. Left at zero, results are as before. The library inside the plugin is updated.
     0.1.4 The home page link goes to the plugin's page on the Detectability site.
     0.1.3 No longer marked experimental: tested on Windows and Linux in QGIS 3.34, 3.40, 3.44 and 4.2. No change in the code.

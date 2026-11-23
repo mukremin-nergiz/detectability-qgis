@@ -9,12 +9,33 @@ import html
 from qgis.core import Qgis, QgsPointXY, QgsProject
 from qgis.gui import QgsMapToolEmitPoint, QgsRubberBand, QgsVertexMarker
 from qgis.PyQt.QtCore import QDate, Qt
+from qgis.PyQt.QtCore import QLocale
+from qgis.PyQt.QtGui import QDoubleValidator
 from qgis.PyQt.QtWidgets import (QCheckBox, QComboBox, QDateEdit, QDockWidget, QDoubleSpinBox, QFormLayout, QGroupBox,
-                                 QHBoxLayout, QLabel, QPushButton, QScrollArea, QTextBrowser, QVBoxLayout, QWidget)
+                                 QHBoxLayout, QLabel, QLineEdit, QPushButton, QScrollArea, QTextBrowser, QVBoxLayout,
+                                 QWidget)
 
 from . import core, geo
 
 VERDICT_COLOUR = {"clearly detectable": "#1b7a43", "marginal": "#9a6700", "not detectable": "#b42318"}
+
+
+def _optional(low: float, high: float, decimals: int, placeholder: str) -> QLineEdit:
+    """A number that may be left empty (empty means "not given"); a dot as decimal sign whatever the locale."""
+    box = QLineEdit()
+    validator = QDoubleValidator(low, high, decimals, box)
+    validator.setLocale(QLocale.c())
+    box.setValidator(validator)
+    box.setPlaceholderText(placeholder)
+    return box
+
+
+def _optional_value(box: QLineEdit) -> float:
+    """The number in an optional box, or 0.0 when it is empty or incomplete (read as "not given")."""
+    try:
+        return float(box.text().strip().replace(",", "."))
+    except ValueError:
+        return 0.0
 
 
 def _spin(value: float, low: float, high: float, decimals: int = 2, suffix: str = "") -> QDoubleSpinBox:
@@ -56,6 +77,16 @@ class DetectabilityPanel(QDockWidget):
         form.addRow("Length across the profile", self.length)
         form.addRow("Target material", self.material)
         form.addRow("Host material", self.host)
+        # The target's own contrasts, target minus host, in place of the material tables; zero takes the tables.
+        self.density_contrast = _optional(-5000.0, 20000.0, 1, "from the table")
+        self.density_contrast.setToolTip("Density of the target minus that of the host, in kg/m³ (gravity), in place "
+                                         "of the material tables. Leave empty to take it from the tables.")
+        self.susceptibility_contrast = _optional(-1.0, 10.0, 6, "from the table")
+        self.susceptibility_contrast.setToolTip("Magnetic susceptibility of the target minus that of the host, in SI "
+                                                "(magnetic and gradient), in place of the material tables. Leave empty "
+                                                "to take it from the tables.")
+        form.addRow("Density contrast (kg/m³)", self.density_contrast)
+        form.addRow("Susceptibility contrast (SI)", self.susceptibility_contrast)
         # Remanent magnetisation (magnetic and gradient): as a Koenigsberger ratio or as a vector; zero is none.
         self.koenigsberger = _spin(0.0, 0.0, 1000.0, 2)
         self.koenigsberger.setSpecialValueText("none")
@@ -369,6 +400,8 @@ class DetectabilityPanel(QDockWidget):
             target["depth_bottom"] = self.depth_bottom.value()
         if shape == "prism":
             target["length"] = self.length.value()
+        target = core.with_contrasts(target, _optional_value(self.density_contrast),
+                                     _optional_value(self.susceptibility_contrast))
         target = core.with_remanence(target, self.remanence.value(), self.remanence_inclination.value(),
                                      self.remanence_declination.value(), self.koenigsberger.value())
         survey = {"gravity_field_noise": self.gravity_noise.value(), "magnetic_field_noise": self.magnetic_site.value(),

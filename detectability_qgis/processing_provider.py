@@ -87,6 +87,10 @@ class StationsAlgorithm(QgsProcessingAlgorithm):
                                          NUMBER, 25.0, minValue=0.02))
         add(QgsProcessingParameterEnum("MATERIAL", "Target material", MATERIALS, defaultValue=MATERIALS.index("air")))
         add(QgsProcessingParameterEnum("HOST", "Host material", MATERIALS, defaultValue=MATERIALS.index("limestone")))
+        add(QgsProcessingParameterNumber("DENSITY_CONTRAST", "Density contrast, target minus host (kg/m³); 0 for the "
+                                         "material tables", NUMBER, 0.0, minValue=-5000.0, maxValue=20000.0))
+        add(QgsProcessingParameterNumber("SUSCEPTIBILITY_CONTRAST", "Susceptibility contrast, target minus host (SI); 0 "
+                                         "for the material tables", NUMBER, 0.0, minValue=-1.0, maxValue=10.0))
         add(QgsProcessingParameterNumber("KOENIGSBERGER_RATIO", "Koenigsberger ratio Q, remanent over induced, along "
                                          "the present field; 0 for none", NUMBER, 0.0, minValue=0.0, maxValue=1000.0))
         add(QgsProcessingParameterNumber("REMANENCE", "Remanent magnetisation (A/m), instead of Q; 0 for none",
@@ -121,6 +125,7 @@ class StationsAlgorithm(QgsProcessingAlgorithm):
             target["size"] = number("SIZE")
         if shape in core.NEEDS_BOTTOM:
             target["depth_bottom"] = number("DEPTH_BOTTOM")
+        target = core.with_contrasts(target, number("DENSITY_CONTRAST"), number("SUSCEPTIBILITY_CONTRAST"))
         target = core.with_remanence(target, number("REMANENCE"), number("REMANENCE_INCLINATION"),
                                      number("REMANENCE_DECLINATION"), number("KOENIGSBERGER_RATIO"))
         date = (self.parameterAsString(parameters, "DATE", context) or "").strip() or datetime.date.today().isoformat()
