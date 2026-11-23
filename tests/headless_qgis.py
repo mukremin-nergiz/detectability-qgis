@@ -118,6 +118,26 @@ try:
     assert panel.out.toPlainText() == text
     log["line_spacing"] = "ok"
 
+    # remanence: a Koenigsberger ratio reaches the library and is reported; none gives the same result as before
+    assert panel.koenigsberger.value() == 0 and panel.koenigsberger.text() == "none" and panel.remanence.text() == "none"
+    panel.koenigsberger.setValue(4.1)
+    panel.run()
+    assert "Koenigsberger ratio given (Q = 4.1" in panel.out.toPlainText(), panel.out.toPlainText()[:800]
+    panel.koenigsberger.setValue(0.0)
+    panel.remanence.setValue(1.5)
+    panel.remanence_inclination.setValue(60.0)
+    panel.run()
+    assert "remanent magnetisation given (1.5 A/m" in panel.out.toPlainText(), panel.out.toPlainText()[:800]
+    panel.koenigsberger.setValue(2.0)
+    panel.run()
+    assert "not both" in panel.out.toPlainText(), panel.out.toPlainText()[:400]
+    panel.koenigsberger.setValue(0.0)
+    panel.remanence.setValue(0.0)
+    panel.remanence_inclination.setValue(0.0)
+    panel.run()
+    assert panel.out.toPlainText() == text
+    log["remanence"] = "ok"
+
     # the map tools, driven the way a click drives them
     panel.clear_map()
     panel.start_line()
@@ -158,6 +178,14 @@ try:
     first = next(magnetic.getFeatures())
     assert first["method"] == "Magnetic" and first["verdict"] == "clearly detectable"
     log["magnetic_stations"] = magnetic.featureCount()
+    remanent = processing.run("detectability:stations", {"INPUT": lines, "SHAPE": 4, "DEPTH_TOP": 2, "SIZE": 5,
+                                                         "DEPTH_BOTTOM": 60, "MATERIAL": core.MATERIALS.index("basalt"),
+                                                         "HOST": core.MATERIALS.index("sandstone"), "METHOD": 1,
+                                                         "MAGNETIC_TIME_NOISE": 3.6, "DATE": "2027-03-01",
+                                                         "KOENIGSBERGER_RATIO": 2.0, "OUTPUT": "memory:"})["OUTPUT"]
+    snr = next(magnetic.getFeatures())["signal_noise"], next(remanent.getFeatures())["signal_noise"]
+    assert abs(snr[1] / snr[0] - 3.0) < 1e-6, snr          # along the present field: 1 + Q times the induced
+    log["processing_remanence"] = round(snr[1] / snr[0], 6)
 
     plugin.unload()
     assert window.docks == [] and window.menu == []

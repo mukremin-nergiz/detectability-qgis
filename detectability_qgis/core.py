@@ -37,6 +37,22 @@ def with_line_spacing(survey: dict, spacing_m) -> dict:
     return survey
 
 
+def with_remanence(target: dict, remanence=0.0, inclination=0.0, declination=0.0, koenigsberger_ratio=0.0) -> dict:
+    """The target with a remanent magnetisation, added by the library to the induced one (magnetic and gradient).
+
+    Either as a vector, ``remanence`` (A/m) with its inclination (degrees, down positive) and declination (degrees east
+    of north), or as a Koenigsberger ratio Q, remanent over induced, taken along the present field. Zero (or nothing)
+    for both leaves the target as it is: induced magnetisation only, as before. Giving both is refused by the library,
+    with its own message."""
+    target = dict(target)
+    if remanence:
+        target.update(remanence=float(remanence), remanence_inclination=float(inclination),
+                      remanence_declination=float(declination))
+    if koenigsberger_ratio:
+        target["koenigsberger_ratio"] = float(koenigsberger_ratio)
+    return target
+
+
 def evaluate(target: dict, survey: dict, methods, magnetic_time_noise: float = 0.0) -> dict:
     """Run the library and return its report as plain data.
 

@@ -56,6 +56,23 @@ class DetectabilityPanel(QDockWidget):
         form.addRow("Length across the profile", self.length)
         form.addRow("Target material", self.material)
         form.addRow("Host material", self.host)
+        # Remanent magnetisation (magnetic and gradient): as a Koenigsberger ratio or as a vector; zero is none.
+        self.koenigsberger = _spin(0.0, 0.0, 1000.0, 2)
+        self.koenigsberger.setSpecialValueText("none")
+        self.koenigsberger.setToolTip("Remanent over induced magnetisation, taken along the present field. Leave at "
+                                      "none for induced magnetisation only. Give either this or the vector below.")
+        self.remanence = _spin(0.0, 0.0, 100000.0, 3, "A/m")
+        self.remanence.setSpecialValueText("none")
+        self.remanence.setToolTip("Intensity of the remanent magnetisation; its direction is set by the inclination "
+                                  "and declination below. Give either this or a Koenigsberger ratio.")
+        self.remanence_inclination = _spin(0.0, -90.0, 90.0, 1, "°")
+        self.remanence_inclination.setToolTip("Inclination of the remanence, positive downwards.")
+        self.remanence_declination = _spin(0.0, -180.0, 360.0, 1, "°")
+        self.remanence_declination.setToolTip("Declination of the remanence, east of north.")
+        form.addRow("Koenigsberger ratio Q", self.koenigsberger)
+        form.addRow("Remanence", self.remanence)
+        form.addRow("Remanence inclination", self.remanence_inclination)
+        form.addRow("Remanence declination", self.remanence_declination)
         outer.addWidget(target)
 
         # Methods
@@ -352,6 +369,8 @@ class DetectabilityPanel(QDockWidget):
             target["depth_bottom"] = self.depth_bottom.value()
         if shape == "prism":
             target["length"] = self.length.value()
+        target = core.with_remanence(target, self.remanence.value(), self.remanence_inclination.value(),
+                                     self.remanence_declination.value(), self.koenigsberger.value())
         survey = {"gravity_field_noise": self.gravity_noise.value(), "magnetic_field_noise": self.magnetic_site.value(),
                   "latitude": self.latitude.value(), "longitude": self.longitude.value(),
                   "date": self.date.date().toString("yyyy-MM-dd")}

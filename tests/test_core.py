@@ -121,3 +121,28 @@ def test_a_line_spacing_gives_the_worst_case_between_two_lines_and_zero_changes_
     assert "worst case between lines 40 m apart, not those of this one line" in core.line_notes(400.0, plan, 12.0)[1]
     tunnel = {"shape": "horizontal_cylinder", "depth_top": 4.0, "size": 3.0, "material": "air", "host": "limestone"}
     assert core.rows(core.evaluate(tunnel, core.with_line_spacing({}, 40.0), ["gravity"]))[0]["lines"] is None
+
+
+def test_remanence_is_passed_to_the_library_and_zero_changes_nothing():
+    body = {"shape": "sphere", "depth_top": 15.0, "size": 20.0, "material": "basalt", "host": "limestone"}
+    plain = core.evaluate(body, WHERE, ["magnetic"])
+    assert core.with_remanence(body) == body and core.with_remanence(body, 0.0, 30.0, 10.0, 0.0) == body
+    assert core.evaluate(core.with_remanence(body), WHERE, ["magnetic"])["results"] == plain["results"]
+    a = plain["results"][0]["assessment"]
+    assert any("induced magnetisation only" in line for line in a["assumptions"])
+    # a Koenigsberger ratio along the present field: the response of this linear model grows by 1 + Q
+    q = core.evaluate(core.with_remanence(body, koenigsberger_ratio=2.0), WHERE, ["magnetic"])["results"][0]["assessment"]
+    assert abs(q["peak"] / a["peak"] - 3.0) < 1e-6
+    assert any("Koenigsberger ratio given (Q = 2" in line for line in q["assumptions"])
+    # a vector: all three are passed, and the result says so
+    v = core.with_remanence(body, 1.5, 60.0, 10.0)
+    assert (v["remanence"], v["remanence_inclination"], v["remanence_declination"]) == (1.5, 60.0, 10.0)
+    va = core.evaluate(v, WHERE, ["magnetic"])["results"][0]["assessment"]
+    assert va["peak"] != a["peak"] and any("remanent magnetisation given (1.5 A/m" in line for line in va["assumptions"])
+    # both at once: refused by the library with its own message
+    try:
+        core.evaluate(core.with_remanence(body, 1.5, 60.0, 10.0, 2.0), WHERE, ["magnetic"])
+    except ValueError as error:
+        assert "not both" in str(error)
+    else:
+        raise AssertionError("both a vector and a ratio were accepted")

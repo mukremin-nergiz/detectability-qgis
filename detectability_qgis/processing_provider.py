@@ -87,6 +87,14 @@ class StationsAlgorithm(QgsProcessingAlgorithm):
                                          NUMBER, 25.0, minValue=0.02))
         add(QgsProcessingParameterEnum("MATERIAL", "Target material", MATERIALS, defaultValue=MATERIALS.index("air")))
         add(QgsProcessingParameterEnum("HOST", "Host material", MATERIALS, defaultValue=MATERIALS.index("limestone")))
+        add(QgsProcessingParameterNumber("KOENIGSBERGER_RATIO", "Koenigsberger ratio Q, remanent over induced, along "
+                                         "the present field; 0 for none", NUMBER, 0.0, minValue=0.0, maxValue=1000.0))
+        add(QgsProcessingParameterNumber("REMANENCE", "Remanent magnetisation (A/m), instead of Q; 0 for none",
+                                         NUMBER, 0.0, minValue=0.0))
+        add(QgsProcessingParameterNumber("REMANENCE_INCLINATION", "Remanence inclination (°, down positive)", NUMBER,
+                                         0.0, minValue=-90.0, maxValue=90.0))
+        add(QgsProcessingParameterNumber("REMANENCE_DECLINATION", "Remanence declination (° east of north)", NUMBER,
+                                         0.0, minValue=-180.0, maxValue=360.0))
         add(QgsProcessingParameterEnum("METHOD", "Method", [label for _, label in core.METHODS], defaultValue=0))
         add(QgsProcessingParameterNumber("GRAVITY_NOISE", "Gravity field noise (µGal)", NUMBER,
                                          core.DEFAULT_GRAVITY_FIELD_UGAL, minValue=0.0))
@@ -113,6 +121,8 @@ class StationsAlgorithm(QgsProcessingAlgorithm):
             target["size"] = number("SIZE")
         if shape in core.NEEDS_BOTTOM:
             target["depth_bottom"] = number("DEPTH_BOTTOM")
+        target = core.with_remanence(target, number("REMANENCE"), number("REMANENCE_INCLINATION"),
+                                     number("REMANENCE_DECLINATION"), number("KOENIGSBERGER_RATIO"))
         date = (self.parameterAsString(parameters, "DATE", context) or "").strip() or datetime.date.today().isoformat()
 
         fields = QgsFields()

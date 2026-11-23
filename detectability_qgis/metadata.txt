@@ -11,7 +11,7 @@ about=Describe a buried target and a survey; the plugin models the gravity, magn
     model-based expectations under the stated assumptions, not guarantees.
     No external dependency: the plugin carries the Detectability library (BSD-3-Clause) and uses the NumPy that
     comes with QGIS. It makes no network connection and collects no data.
-version=0.1.5
+version=0.1.6
 author=Mükremin Nergiz
 email=mukreminnergiz@live.com
 homepage=https://detectability.mukreminnergiz.com/detectability-qgis-plugin
@@ -20,7 +20,8 @@ repository=https://github.com/mukremin-nergiz/detectability-qgis
 category=Plugins
 icon=icon.png
 tags=geophysics,gravity,magnetics,GPR,survey planning
-changelog=0.1.5 Line spacing: with the distance between parallel survey lines given (panel and Processing algorithm), a compact target is assessed where the survey reads least between two lines instead of under the line. Left at zero, results are as before. The library inside the plugin is updated.
+changelog=0.1.6 Remanent magnetisation: the target's remanence can be given, as a Koenigsberger ratio Q (along the present field) or as a vector (intensity, inclination, declination), in the panel and the Processing algorithm; the library adds it to the induced magnetisation and every magnetic result says which was used. Left at none, results are as before (induced magnetisation only).
+    0.1.5 Line spacing: with the distance between parallel survey lines given (panel and Processing algorithm), a compact target is assessed where the survey reads least between two lines instead of under the line. Left at zero, results are as before. The library inside the plugin is updated.
     0.1.4 The home page link goes to the plugin's page on the Detectability site.
     0.1.3 No longer marked experimental: tested on Windows and Linux in QGIS 3.34, 3.40, 3.44 and 4.2. No change in the code.
     0.1.2 Metadata: the deprecated supportsQt6 flag is removed; QGIS 4 compatibility is stated by qgisMaximumVersion 4.99.

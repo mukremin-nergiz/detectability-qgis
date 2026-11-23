@@ -59,6 +59,12 @@ those of that line, and the result says what share of the best line it reads. It
 (straight, evenly spaced lines, constant height, flat ground); a real one can lose more, and every such result says
 so with its source. Left at zero, results are those of a line over the target.
 
+Give a **remanent magnetisation** (panel, or the Processing algorithm's parameters) and the magnetic and gradient
+results add it to the induced magnetisation: either as a Koenigsberger ratio Q, remanent over induced, taken along the
+present field, or as a vector (intensity in A/m, inclination and declination). Give one or the other, not both. No
+material in the plugin carries a remanence of its own; left at none, the result is for induced magnetisation only,
+and says so.
+
 ## Where it has been tried
 
 The whole plugin (load, panel, target, line, stations, Processing, unload) is run by `tests/headless_qgis.py` inside
